@@ -4,8 +4,10 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -17,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.piece_detection.PieceDetection;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
@@ -80,9 +83,57 @@ public class DriveCommands {
           boolean isFlipped =
               DriverStation.getAlliance().isPresent()
                   && DriverStation.getAlliance().get() == Alliance.Red;
-          ChassisSpeeds.fromFieldRelativeSpeeds(
-              speeds,
+          speeds.toRobotRelativeSpeeds(
               isFlipped ? drive.getRotation().plus(new Rotation2d(Math.PI)) : drive.getRotation());
+
+          drive.runVelocity(speeds);
+        },
+        drive);
+  }
+
+  /**
+   * Field relative drive command using two joysticks (controlling linear and angular velocities).
+   */
+  public static Command joystickDrivePieceDetection(
+      Drive drive,
+      PieceDetection pieceDetection,
+      DoubleSupplier kDetection,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      DoubleSupplier omegaSupplier) {
+    return Commands.run(
+        () -> {
+          // Get linear velocity
+          Translation2d linearVelocity =
+              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+
+          // Apply rotation deadband
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+
+          // Square rotation value for more precise control
+          omega = Math.copySign(omega * omega, omega);
+
+          // Convert to field relative speeds & send command
+          ChassisSpeeds speeds =
+              new ChassisSpeeds(
+                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
+                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                  omega * drive.getMaxAngularSpeedRadPerSec());
+          boolean isFlipped =
+              DriverStation.getAlliance().isPresent()
+                  && DriverStation.getAlliance().get() == Alliance.Red;
+          speeds.toRobotRelativeSpeeds(
+              isFlipped ? drive.getRotation().plus(new Rotation2d(Math.PI)) : drive.getRotation());
+
+          if (Math.abs(speeds.vyMetersPerSecond) > 0.1) {
+            speeds.vyMetersPerSecond =
+                speeds.vyMetersPerSecond
+                    + new Transform3d(
+                                new Pose3d(drive.getPose()), pieceDetection.getGamePiecePose())
+                            .getY()
+                        * kDetection.getAsDouble();
+          }
+
           drive.runVelocity(speeds);
         },
         drive);
@@ -129,8 +180,7 @@ public class DriveCommands {
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()
                       && DriverStation.getAlliance().get() == Alliance.Red;
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  speeds,
+              speeds.toRobotRelativeSpeeds(
                   isFlipped
                       ? drive.getRotation().plus(new Rotation2d(Math.PI))
                       : drive.getRotation());

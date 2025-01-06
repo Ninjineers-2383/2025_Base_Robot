@@ -22,11 +22,10 @@ import frc.robot.subsystems.drive.spark.ModuleIOSparkSim;
 import frc.robot.subsystems.drive.talon.ModuleIOTalonFX;
 import frc.robot.subsystems.drive.talon.PhoenixOdometryThread;
 import frc.robot.subsystems.drive.talon.TalonFXModuleConstants;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.subsystems.piece_detection.PieceDetection;
+import frc.robot.subsystems.piece_detection.PieceDetectionConstants;
+import frc.robot.subsystems.piece_detection.PieceDetectionIOPhoton;
+import frc.robot.subsystems.piece_detection.PieceDetectionIOSim;
 import frc.robot.util.pathplanner.AdvancedPPHolonomicDriveController;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -44,11 +43,13 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
 
-  @SuppressWarnings("unused")
-  private final Vision vision;
+  //   @SuppressWarnings("unused")
+  //   private final Vision vision;
 
   // Simulation
   private SwerveDriveSimulation driveSimulation = null;
+
+  private PieceDetection pieceDetection;
 
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);
@@ -70,11 +71,17 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TalonFXModuleConstants.rearLeft),
                 new ModuleIOTalonFX(TalonFXModuleConstants.rearRight),
                 PhoenixOdometryThread.getInstance());
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIOPhotonVision(
-                    VisionConstants.camera0Name, VisionConstants.robotToCamera0));
+        // vision =
+        //     new Vision(
+        //         drive::addVisionMeasurement,
+        //         new VisionIOPhotonVision(
+        //             VisionConstants.camera0Name, VisionConstants.robotToCamera0));
+
+        pieceDetection =
+            new PieceDetection(
+                new PieceDetectionIOPhoton(
+                    "Camera_Module_v1", PieceDetectionConstants.CORAL_DETECTION),
+                () -> new Pose3d(drive.getPose()));
         break;
 
       case SIM:
@@ -94,17 +101,21 @@ public class RobotContainer {
                 new ModuleIOSparkSim(driveSimulation.getModules()[3]),
                 null);
 
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(
-                    VisionConstants.camera0Name,
-                    VisionConstants.robotToCamera0,
-                    driveSimulation::getSimulatedDriveTrainPose),
-                new VisionIOPhotonVisionSim(
-                    VisionConstants.camera1Name,
-                    VisionConstants.robotToCamera1,
-                    driveSimulation::getSimulatedDriveTrainPose));
+        // vision =
+        //     new Vision(
+        //         drive::addVisionMeasurement,
+        //         new VisionIOPhotonVisionSim(
+        //             VisionConstants.camera0Name,
+        //             VisionConstants.robotToCamera0,
+        //             driveSimulation::getSimulatedDriveTrainPose),
+        //         new VisionIOPhotonVisionSim(
+        //             VisionConstants.camera1Name,
+        //             VisionConstants.robotToCamera1,
+        //             driveSimulation::getSimulatedDriveTrainPose));
+
+        pieceDetection =
+            new PieceDetection(
+                new PieceDetectionIOSim(null, null), () -> new Pose3d(drive.getPose()));
         break;
 
       default:
@@ -117,7 +128,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 null);
-        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
+        // vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         break;
     }
 
@@ -154,8 +165,10 @@ public class RobotContainer {
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
     drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
+        DriveCommands.joystickDrivePieceDetection(
             drive,
+            pieceDetection,
+            xOverride::get,
             () -> -driverController.getLeftY(),
             () -> -driverController.getLeftX(),
             () -> -driverController.getRightX()));
@@ -173,26 +186,42 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     driverController.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Reset gyro / odometry
-    final Runnable resetGyro =
-        Constants.currentMode == Constants.Mode.SIM
-            ? () ->
-                drive.setPose(
-                    driveSimulation
-                        .getSimulatedDriveTrainPose()) // reset odometry to actual robot pose during
-            // simulation
-            : () ->
-                drive.setPose(
-                    new Pose2d(
-                        drive.getPose().getTranslation(),
-                        DriverStation.getAlliance().isPresent()
-                            ? (DriverStation.getAlliance().get() == DriverStation.Alliance.Red
-                                ? new Rotation2d(Math.PI)
-                                : new Rotation2d())
-                            : new Rotation2d())); // zero gyro
+    // // Reset gyro / odometry
+    // final Runnable resetGyro =
+    //     Constants.currentMode == Constants.Mode.SIM
+    //         ? () ->
+    //             drive.setPose(
+    //                 driveSimulation
+    //                     .getSimulatedDriveTrainPose()) // reset odometry to actual robot pose
+    // during
+    //         // simulation
+    //         : () ->
+    //             drive.setPose(
+    //                 new Pose2d(
+    //                     drive.getPose().getTranslation(),
+    //                     DriverStation.getAlliance().isPresent()
+    //                         ? (DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+    //                             ? new Rotation2d(Math.PI)
+    //                             : new Rotation2d())
+    //                         : new Rotation2d())); // zero gyro
 
     // Reset gyro to 0° when B button is pressed
-    driverController.b().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
+    driverController
+        .b()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        drive.setPose(
+                            new Pose2d(
+                                drive.getPose().getTranslation(),
+                                DriverStation.getAlliance().isPresent()
+                                    ? (DriverStation.getAlliance().get()
+                                            == DriverStation.Alliance.Red
+                                        ? new Rotation2d(Math.PI)
+                                        : new Rotation2d())
+                                    : new Rotation2d())),
+                    drive)
+                .ignoringDisable(true));
 
     AdvancedPPHolonomicDriveController.setYSetpointIncrement(xOverride::get);
   }
