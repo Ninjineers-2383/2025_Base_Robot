@@ -125,7 +125,9 @@ public class DriveCommands {
           speeds.toRobotRelativeSpeeds(
               isFlipped ? drive.getRotation().plus(new Rotation2d(Math.PI)) : drive.getRotation());
 
-          if (Math.abs(speeds.vyMetersPerSecond) > 0.1) {
+          if (Math.abs(speeds.vyMetersPerSecond) > 0.1
+              && Math.abs(speeds.vyMetersPerSecond) < 0.3
+              && speeds.vxMetersPerSecond < 0.1) {
             speeds.vyMetersPerSecond =
                 speeds.vyMetersPerSecond
                     + new Transform3d(
