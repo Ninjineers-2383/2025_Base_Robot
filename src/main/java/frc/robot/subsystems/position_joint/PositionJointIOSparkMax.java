@@ -82,15 +82,27 @@ public class PositionJointIOSparkMax implements PositionJointIO {
 
     motors[0] =
         new SparkMax(config.canIds()[0], isBrushless ? MotorType.kBrushless : MotorType.kBrushed);
-    leaderConfig =
-        new SparkMaxConfig()
-            .inverted(config.reversed()[0])
-            .idleMode(IdleMode.kBrake)
-            .apply(new EncoderConfig().inverted(true))
-            .apply(
-                new EncoderConfig()
-                    .positionConversionFactor(1.0 / config.gearRatio())
-                    .velocityConversionFactor(1.0 / (60.0 * config.gearRatio())));
+
+    if (isBrushless) {
+      leaderConfig =
+          new SparkMaxConfig()
+              .apply(
+                  new EncoderConfig()
+                      .positionConversionFactor(1.0 / config.gearRatio())
+                      .velocityConversionFactor(1.0 / (60.0 * config.gearRatio())))
+              .inverted(config.reversed()[0])
+              .idleMode(IdleMode.kBrake);
+
+    } else {
+      leaderConfig =
+          new SparkMaxConfig()
+              .apply(
+                  new EncoderConfig()
+                      .positionConversionFactor(1.0 / config.gearRatio())
+                      .velocityConversionFactor(1.0 / (60.0 * config.gearRatio()))
+                      .inverted(config.reversed()[0]))
+              .idleMode(IdleMode.kBrake);
+    }
 
     switch (config.encoderType()) {
       case INTERNAL:
@@ -180,10 +192,7 @@ public class PositionJointIOSparkMax implements PositionJointIO {
       motors[i] =
           new SparkMax(config.canIds()[i], isBrushless ? MotorType.kBrushless : MotorType.kBrushed);
       motors[i].configure(
-          new SparkMaxConfig()
-              .follow(motors[0])
-              .inverted(config.reversed()[i])
-              .idleMode(IdleMode.kBrake),
+          new SparkMaxConfig().follow(motors[0], config.reversed()[i]).idleMode(IdleMode.kBrake),
           ResetMode.kNoResetSafeParameters,
           PersistMode.kNoPersistParameters);
 
