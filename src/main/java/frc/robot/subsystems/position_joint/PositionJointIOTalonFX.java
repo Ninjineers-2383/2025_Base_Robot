@@ -72,6 +72,7 @@ public class PositionJointIOTalonFX implements PositionJointIO {
   private final Alert encoderAlert;
 
   private double positionSetpoint = 0.0;
+  private double velocitySetpoint = 0.0;
 
   public PositionJointIOTalonFX(
       String name, PositionJointHardwareConfig config, DoubleSupplier externalFeedforward) {
@@ -236,6 +237,7 @@ public class PositionJointIOTalonFX implements PositionJointIO {
     inputs.velocity = velocity.getValueAsDouble();
 
     inputs.desiredVelocity = positionSetpoint;
+    inputs.desiredVelocity = velocitySetpoint;
 
     for (int i = 0; i < motors.length; i++) {
       // Do not refresh the three status signals above
@@ -286,6 +288,7 @@ public class PositionJointIOTalonFX implements PositionJointIO {
   @Override
   public void setPosition(double position, double velocity) {
     positionSetpoint = position;
+    velocitySetpoint = velocity;
 
     motors[0].setControl(
         positionRequest
