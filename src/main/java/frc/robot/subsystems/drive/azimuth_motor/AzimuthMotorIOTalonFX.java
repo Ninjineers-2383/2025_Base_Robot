@@ -72,6 +72,7 @@ public class AzimuthMotorIOTalonFX implements AzimuthMotorIO {
   private final Alert encoderAlert;
 
   private double positionSetpoint = 0.0;
+  private double velocitySetpoint = 0.0;
 
   private final Queue<Double> timestampQueue;
   private final Queue<Double> turnPositionQueue;
@@ -238,7 +239,8 @@ public class AzimuthMotorIOTalonFX implements AzimuthMotorIO {
     inputs.rotorPositionRotations = rotorPosition.getValueAsDouble();
     inputs.velocityRotationsPerSecond = velocity.getValueAsDouble();
 
-    inputs.desiredVelocityRotationsPerSecond = positionSetpoint;
+    inputs.desiredVelocityRotationsPerSecond = velocitySetpoint;
+    inputs.desiredPositionRotations = positionSetpoint;
 
     for (int i = 0; i < motors.length; i++) {
       // Do not refresh the three status signals above
@@ -300,6 +302,7 @@ public class AzimuthMotorIOTalonFX implements AzimuthMotorIO {
   @Override
   public void setPosition(double position, double velocity) {
     positionSetpoint = position;
+    velocitySetpoint = velocity;
 
     motors[0].setControl(positionRequest.withPosition(position).withVelocity(velocity));
   }
