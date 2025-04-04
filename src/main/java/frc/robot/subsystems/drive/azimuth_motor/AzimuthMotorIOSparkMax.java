@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorConstants.AzimuthMotorGains;
 import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorConstants.AzimuthMotorHardwareConfig;
 import frc.robot.subsystems.drive.odometry_threads.SparkOdometryThread;
+import frc.robot.util.encoder.AbsoluteAnalogEncoder;
 import frc.robot.util.encoder.AbsoluteCancoder;
 import frc.robot.util.encoder.AbsoluteMagEncoder;
 import frc.robot.util.encoder.IAbsoluteEncoder;
@@ -94,6 +95,8 @@ public class AzimuthMotorIOSparkMax implements AzimuthMotorIO {
 
         motors[0].configure(
             leaderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+
+        motors[0].getEncoder().setPosition(0);
         break;
       case EXTERNAL_CANCODER:
         externalEncoder =
@@ -155,7 +158,22 @@ public class AzimuthMotorIOSparkMax implements AzimuthMotorIO {
                 motors[0].getAbsoluteEncoder().getPosition()
                     + config.encoderOffset().getRotations());
         break;
+      case EXTERNAL_ANALOG:
+        externalEncoder = new AbsoluteAnalogEncoder(config.encoderID());
 
+        encoderAlert =
+            new Alert(
+                name,
+                name + " Analog Encoder Disconnected! Analog ID: " + config.encoderID(),
+                AlertType.kWarning);
+
+        motors[0].configure(
+            leaderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        motors[0]
+            .getEncoder()
+            .setPosition(
+                externalEncoder.getAbsoluteAngle().plus(config.encoderOffset()).getRotations());
+        break;
       default:
         externalEncoder = new IAbsoluteEncoder() {};
         encoderAlert =
@@ -200,7 +218,7 @@ public class AzimuthMotorIOSparkMax implements AzimuthMotorIO {
     currentPosition = motors[0].getEncoder().getPosition();
 
     inputs.outputPositionRotations = currentPosition;
-    inputs.rotorPositionRotations = currentPosition * hardwareConfig.gearRatio();
+    inputs.rotorPositionRotations = externalEncoder.getAbsoluteAngle().getRotations();
     inputs.desiredPositionRotations = positionSetpoint;
 
     inputs.velocityRotationsPerSecond = motors[0].getEncoder().getVelocity();
@@ -241,6 +259,9 @@ public class AzimuthMotorIOSparkMax implements AzimuthMotorIO {
         break;
       case EXTERNAL_SPARK:
         encoderConnected = motors[0].getLastError() == REVLibError.kOk;
+        break;
+      case EXTERNAL_ANALOG:
+        encoderConnected = true;
         break;
     }
 

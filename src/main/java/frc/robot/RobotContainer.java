@@ -3,6 +3,7 @@ package frc.robot;
 import com.pathplanner.lib.auto.AutoBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
@@ -16,19 +17,14 @@ import frc.robot.subsystems.drive.Module;
 import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorConstants;
 import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorIOReplay;
 import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorIOSim;
-import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorIOTalonFX;
+import frc.robot.subsystems.drive.azimuth_motor.AzimuthMotorIOSparkMax;
 import frc.robot.subsystems.drive.drive_motor.DriveMotorConstants;
 import frc.robot.subsystems.drive.drive_motor.DriveMotorIOReplay;
 import frc.robot.subsystems.drive.drive_motor.DriveMotorIOSim;
-import frc.robot.subsystems.drive.drive_motor.DriveMotorIOTalonFX;
+import frc.robot.subsystems.drive.drive_motor.DriveMotorIOSparkMax;
 import frc.robot.subsystems.drive.gyro.GyroIO;
-import frc.robot.subsystems.drive.gyro.GyroIOPigeon2;
+import frc.robot.subsystems.drive.gyro.GyroIO470;
 import frc.robot.subsystems.drive.odometry_threads.PhoenixOdometryThread;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -40,9 +36,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
-
-  @SuppressWarnings("unused")
-  private final Vision vision;
 
   // Controller
   private final CommandXboxController driverController = new CommandXboxController(0);
@@ -60,40 +53,36 @@ public class RobotContainer {
         // the Phoenix Odometry Thread, if using a combination of the two, set up both
         drive =
             new Drive(
-                new GyroIOPigeon2(0, "Drive"),
+                new GyroIO470(),
                 new Module(
-                    new DriveMotorIOTalonFX(
+                    new DriveMotorIOSparkMax(
                         "FrontLeftDrive", DriveMotorConstants.FRONT_LEFT_CONFIG),
                     DriveMotorConstants.FRONT_LEFT_GAINS,
-                    new AzimuthMotorIOTalonFX(
+                    new AzimuthMotorIOSparkMax(
                         "FrontLeftAz", AzimuthMotorConstants.FRONT_LEFT_CONFIG),
                     AzimuthMotorConstants.FRONT_LEFT_GAINS),
                 new Module(
-                    new DriveMotorIOTalonFX(
+                    new DriveMotorIOSparkMax(
                         "FrontRightDrive", DriveMotorConstants.FRONT_RIGHT_CONFIG),
                     DriveMotorConstants.FRONT_RIGHT_GAINS,
-                    new AzimuthMotorIOTalonFX(
+                    new AzimuthMotorIOSparkMax(
                         "FrontRightAz", AzimuthMotorConstants.FRONT_RIGHT_CONFIG),
                     AzimuthMotorConstants.FRONT_RIGHT_GAINS),
                 new Module(
-                    new DriveMotorIOTalonFX("BackLeftDrive", DriveMotorConstants.BACK_LEFT_CONFIG),
+                    new DriveMotorIOSparkMax("BackLeftDrive", DriveMotorConstants.BACK_LEFT_CONFIG),
                     DriveMotorConstants.BACK_LEFT_GAINS,
-                    new AzimuthMotorIOTalonFX("BackLeftAz", AzimuthMotorConstants.BACK_LEFT_CONFIG),
+                    new AzimuthMotorIOSparkMax(
+                        "BackLeftAz", AzimuthMotorConstants.BACK_LEFT_CONFIG),
                     AzimuthMotorConstants.BACK_LEFT_GAINS),
                 new Module(
-                    new DriveMotorIOTalonFX(
+                    new DriveMotorIOSparkMax(
                         "BackRightDrive", DriveMotorConstants.BACK_RIGHT_CONFIG),
                     DriveMotorConstants.BACK_RIGHT_GAINS,
-                    new AzimuthMotorIOTalonFX(
+                    new AzimuthMotorIOSparkMax(
                         "BackRightAz", AzimuthMotorConstants.BACK_RIGHT_CONFIG),
                     AzimuthMotorConstants.BACK_RIGHT_GAINS),
                 PhoenixOdometryThread.getInstance(),
                 null);
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIOPhotonVision(
-                    VisionConstants.camera0Name, VisionConstants.robotToCamera0));
         break;
 
       case SIM:
@@ -123,13 +112,6 @@ public class RobotContainer {
                 null,
                 null);
 
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                new VisionIOPhotonVisionSim(
-                    VisionConstants.camera0Name, VisionConstants.robotToCamera0, drive::getPose),
-                new VisionIOPhotonVisionSim(
-                    VisionConstants.camera1Name, VisionConstants.robotToCamera1, drive::getPose));
         break;
 
       default:
@@ -159,7 +141,6 @@ public class RobotContainer {
                     AzimuthMotorConstants.BACK_RIGHT_GAINS),
                 null,
                 null);
-        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         break;
     }
 
@@ -198,7 +179,7 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive,
             () -> -driverController.getLeftY(),
-            () -> -driverController.getLeftX(),
+            () -> driverController.getLeftX(),
             () -> -driverController.getRightX()));
 
     // Lock to 0° when A button is held
@@ -208,7 +189,7 @@ public class RobotContainer {
             DriveCommands.joystickDriveAtAngle(
                 drive,
                 () -> -driverController.getLeftY(),
-                () -> -driverController.getLeftX(),
+                () -> driverController.getLeftX(),
                 () -> new Rotation2d()));
 
     // Switch to X pattern when X button is pressed
@@ -236,6 +217,17 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.get();
+    return Commands.sequence(
+        Commands.run(
+            () ->
+                drive.setPose(
+                    new Pose2d(
+                        drive.getPose().getTranslation(),
+                        DriverStation.getAlliance().isPresent()
+                            ? (DriverStation.getAlliance().get() == DriverStation.Alliance.Red
+                                ? new Rotation2d(Math.PI)
+                                : new Rotation2d())
+                            : new Rotation2d()))),
+        Commands.run(() -> drive.runVelocity(new ChassisSpeeds(0.5, 0, 0)), drive));
   }
 }

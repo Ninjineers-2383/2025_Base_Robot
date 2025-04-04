@@ -60,7 +60,7 @@ public class DriveConstants {
       (2 * Math.PI) / 60.0 / driveMotorGearRatio; // Rotor RPM -> Wheel Rad/Sec
 
   // Turn motor configuration
-  public static final double steerMotorGearRatio = 150.0 / 7.0; // MK4i
+  public static final double steerMotorGearRatio = 12.1; // MK4i
   public static final int turnMotorCurrentLimit = 20;
   public static final DCMotor turnGearbox = DCMotor.getKrakenX60Foc(1);
 

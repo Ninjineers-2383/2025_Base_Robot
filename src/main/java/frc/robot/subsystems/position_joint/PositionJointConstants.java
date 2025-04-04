@@ -15,7 +15,8 @@ public class PositionJointConstants {
     EXTERNAL_CANCODER,
     EXTERNAL_CANCODER_PRO,
     EXTERNAL_DIO,
-    EXTERNAL_SPARK
+    EXTERNAL_SPARK,
+    EXTERNAL_ANALOG
   }
 
   public record PositionJointGains(
