@@ -24,7 +24,7 @@ import frc.robot.subsystems.drive.drive_motor.DriveMotorIOSim;
 import frc.robot.subsystems.drive.drive_motor.DriveMotorIOSparkMax;
 import frc.robot.subsystems.drive.gyro.GyroIO;
 import frc.robot.subsystems.drive.gyro.GyroIO470;
-import frc.robot.subsystems.drive.odometry_threads.PhoenixOdometryThread;
+import frc.robot.subsystems.drive.odometry_threads.SparkOdometryThread;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -81,8 +81,8 @@ public class RobotContainer {
                     new AzimuthMotorIOSparkMax(
                         "BackRightAz", AzimuthMotorConstants.BACK_RIGHT_CONFIG),
                     AzimuthMotorConstants.BACK_RIGHT_GAINS),
-                PhoenixOdometryThread.getInstance(),
-                null);
+                null,
+                SparkOdometryThread.getInstance());
         break;
 
       case SIM:
@@ -179,7 +179,7 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive,
             () -> -driverController.getLeftY(),
-            () -> driverController.getLeftX(),
+            () -> -driverController.getLeftX(),
             () -> -driverController.getRightX()));
 
     // Lock to 0° when A button is held
@@ -189,7 +189,7 @@ public class RobotContainer {
             DriveCommands.joystickDriveAtAngle(
                 drive,
                 () -> -driverController.getLeftY(),
-                () -> driverController.getLeftX(),
+                () -> -driverController.getLeftX(),
                 () -> new Rotation2d()));
 
     // Switch to X pattern when X button is pressed
@@ -218,7 +218,7 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     return Commands.sequence(
-        Commands.run(
+        Commands.runOnce(
             () ->
                 drive.setPose(
                     new Pose2d(

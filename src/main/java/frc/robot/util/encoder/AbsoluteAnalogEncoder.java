@@ -12,7 +12,7 @@ public class AbsoluteAnalogEncoder implements IAbsoluteEncoder {
 
   @Override
   public Rotation2d getAbsoluteAngle() {
-    return Rotation2d.fromRotations(this.encoder.get());
+    return Rotation2d.fromRotations(this.encoder.get() - 0.5);
   }
 
   @Override

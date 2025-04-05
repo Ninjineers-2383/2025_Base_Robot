@@ -5,6 +5,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.ADIS16470_IMU;
 import edu.wpi.first.wpilibj.ADIS16470_IMU.IMUAxis;
 import frc.robot.subsystems.drive.odometry_threads.PhoenixOdometryThread;
+import frc.robot.subsystems.drive.odometry_threads.SparkOdometryThread;
 import java.util.Queue;
 
 public class GyroIO470 implements GyroIO {
@@ -17,7 +18,7 @@ public class GyroIO470 implements GyroIO {
 
     yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
     yawPositionQueue =
-        PhoenixOdometryThread.getInstance().registerSignal(() -> gyro.getAngle(IMUAxis.kYaw));
+        SparkOdometryThread.getInstance().registerSignal(() -> -gyro.getAngle(IMUAxis.kYaw));
   }
 
   @Override

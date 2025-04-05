@@ -29,46 +29,46 @@ public class AzimuthMotorConstants {
 
   public static final AzimuthMotorHardwareConfig FRONT_LEFT_CONFIG =
       new AzimuthMotorHardwareConfig(
-          new int[] {6},
-          new boolean[] {false},
-          DriveConstants.steerMotorGearRatio,
-          40,
-          EncoderType.EXTERNAL_ANALOG,
-          0,
-          Rotation2d.fromRotations(0),
-          canBusName);
-
-  public static final AzimuthMotorHardwareConfig FRONT_RIGHT_CONFIG =
-      new AzimuthMotorHardwareConfig(
-          new int[] {8},
-          new boolean[] {false},
-          DriveConstants.steerMotorGearRatio,
-          40,
-          EncoderType.EXTERNAL_ANALOG,
-          1,
-          Rotation2d.fromRotations(-0.391),
-          canBusName);
-
-  public static final AzimuthMotorHardwareConfig BACK_LEFT_CONFIG =
-      new AzimuthMotorHardwareConfig(
           new int[] {4},
-          new boolean[] {false},
+          new boolean[] {true},
           DriveConstants.steerMotorGearRatio,
           40,
           EncoderType.EXTERNAL_ANALOG,
           2,
-          Rotation2d.fromRotations(-0.660),
+          Rotation2d.fromRotations(-0.410),
+          canBusName);
+
+  public static final AzimuthMotorHardwareConfig FRONT_RIGHT_CONFIG =
+      new AzimuthMotorHardwareConfig(
+          new int[] {2},
+          new boolean[] {true},
+          DriveConstants.steerMotorGearRatio,
+          40,
+          EncoderType.EXTERNAL_ANALOG,
+          0,
+          Rotation2d.fromRotations(0.257),
+          canBusName);
+
+  public static final AzimuthMotorHardwareConfig BACK_LEFT_CONFIG =
+      new AzimuthMotorHardwareConfig(
+          new int[] {6},
+          new boolean[] {true},
+          DriveConstants.steerMotorGearRatio,
+          40,
+          EncoderType.EXTERNAL_ANALOG,
+          1,
+          Rotation2d.fromRotations(-0.141),
           canBusName);
 
   public static final AzimuthMotorHardwareConfig BACK_RIGHT_CONFIG =
       new AzimuthMotorHardwareConfig(
-          new int[] {2},
-          new boolean[] {false},
+          new int[] {8},
+          new boolean[] {true},
           DriveConstants.steerMotorGearRatio,
           40,
           EncoderType.EXTERNAL_ANALOG,
           3,
-          Rotation2d.fromRotations(-0.420),
+          Rotation2d.fromRotations(-0.168),
           canBusName);
 
   public static final AzimuthMotorGains FRONT_LEFT_GAINS =
